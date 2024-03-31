@@ -2,6 +2,7 @@
 
 import cv2
 import os
+import yaml
 import numpy as np
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
@@ -32,7 +33,11 @@ def main(video_name='测试.mp4'):
 
     timer = Timer(30)
     
+    with open('assets/coco_chinese.yaml', 'r', encoding='utf-8') as f:
+        names = yaml.load(f, Loader=yaml.FullLoader)
+    
     model = YOLO(r"weights/yolov8m.pt")
+    
     video_path = f"videos/{video_name}"
     video_name_without_suffix = os.path.splitext(video_name)[0]
     temp_path = f"results/{video_name_without_suffix}_temp.mp4"
@@ -58,7 +63,7 @@ def main(video_name='测试.mp4'):
         results = model.track(
             frame,
             persist=True,
-            classes=[0, 2],  # 0: person, 2: car
+            classes=[0, 2, 5, 7],  # 0: person, 2: car
             # tracker="botsort.yaml",  # 12fps
             tracker="bytetrack.yaml",  # 20fps
             # imgsz=(384, 640),
@@ -74,7 +79,7 @@ def main(video_name='测试.mp4'):
         show_id = timer(id_set, show_id)
 
         annotated_frame = frame.copy()
-        annotator = Annotator(annotated_frame, line_width=2, example=str(results[0].names))
+        annotator = Annotator(annotated_frame, line_width=2, font_size=20, pil=True, example=str(names[0]))
         det = results[0].boxes.data.cpu().numpy()
         if len(det) and len(det[0]) == 7:  # 有目标，且有id元素
             for *xyxy, id, conf, cls in reversed(det):
@@ -99,7 +104,7 @@ def main(video_name='测试.mp4'):
                     # 显示指定id的目标
                     if id in show_id.keys() or show_id == {}:
                         # label = f"{id} {results[0].names[c]} {conf:.2f}"
-                        label = f"{results[0].names[c]}"
+                        label = f"{names[c]}"
                         # print('xyxy', det, xyxy)
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
