@@ -10,7 +10,8 @@ from utils.toolbox import Interpolator, Timer
 from utils.regional_judgment import point_in_rect
 from moviepy.editor import VideoFileClip
 
-
+show_all = False
+hide_all = True
 l_point, r_point = None, None
 
 def on_mouse(event, x, y, flags, param):
@@ -28,7 +29,7 @@ def on_mouse(event, x, y, flags, param):
         # print(point2)
 
 def main(video_name='测试.mp4'):
-    global img, l_point, r_point
+    global img, l_point, r_point, show_all, hide_all
     show_id = {}
 
     timer = Timer(30)
@@ -91,6 +92,8 @@ def main(video_name='测试.mp4'):
                             # show_id.append(id)
                             show_id = timer.add_delay(show_id, id)
                             l_point = None
+                            show_all = False
+                            hide_all = False
 
                     if r_point is not None:
                         if point_in_rect(r_point, xyxy):
@@ -100,9 +103,15 @@ def main(video_name='测试.mp4'):
                             except:
                                 pass
                             r_point = None
+                            show_all = False
+                            hide_all = False
 
-                    # 显示指定id的目标
-                    if id in show_id.keys() or show_id == {}:
+                    if show_all: # 显示所有目标
+                        label = f"{names[c]}"
+                        annotator.box_label(xyxy, label, color=colors(c, True))
+                    elif hide_all:
+                            pass
+                    elif id in show_id.keys():  # 显示指定id的目标
                         # label = f"{id} {results[0].names[c]} {conf:.2f}"
                         label = f"{names[c]}"
                         # print('xyxy', det, xyxy)
@@ -115,6 +124,15 @@ def main(video_name='测试.mp4'):
         key = cv2.waitKey(1)
         if key == 27:
             break
+        elif key == 97:  # a键显示所有目标
+            show_all = True
+            hide_all = False
+            show_id = {}
+        elif key == 115:  # s键清除所有目标
+            show_all = False
+            hide_all = True
+            show_id = {}
+
     cap.release()
     video_writer.release()
 
