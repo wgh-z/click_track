@@ -1,2 +1,4 @@
 ultralytics
+clip
+lapx>=0.5.2
 moviepy

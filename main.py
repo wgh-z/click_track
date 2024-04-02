@@ -119,7 +119,7 @@ def main(video_name='测试.mp4'):
                     if show_all: # 显示所有目标
                         # label = f"{id} {results[0].names[c]} {conf:.2f}"
                         label = f"{names[c]}"
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        annotator.box_label(xyxy, label, color=colors(c+1, True))
                     elif hide_all:
                             pass
                     elif id in show_id.keys():  # 显示指定id的目标
