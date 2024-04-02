@@ -10,8 +10,12 @@ from utils.toolbox import Interpolator, Timer
 from utils.regional_judgment import point_in_rect
 from moviepy.editor import VideoFileClip
 
+
 show_all = False
 hide_all = True
+pause = False
+first_puase = True
+prior_frame = None
 l_point, r_point = None, None
 
 def on_mouse(event, x, y, flags, param):
@@ -29,7 +33,7 @@ def on_mouse(event, x, y, flags, param):
         # print(point2)
 
 def main(video_name='测试.mp4'):
-    global img, l_point, r_point, show_all, hide_all
+    global img, l_point, r_point, show_all, hide_all, pause, first_puase, prior_frame
     show_id = {}
 
     timer = Timer(30)
@@ -57,7 +61,13 @@ def main(video_name='测试.mp4'):
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     video_writer = cv2.VideoWriter(temp_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
     while True:
-        ret, frame = cap.read()
+        if not pause:
+            ret, frame = cap.read()
+            prior_frame = frame
+        else:
+            frame = prior_frame
+            ret = True
+
         if not ret:
             break
 
@@ -68,7 +78,7 @@ def main(video_name='测试.mp4'):
             # tracker="botsort.yaml",  # 12fps
             tracker="bytetrack.yaml",  # 20fps
             # imgsz=(384, 640),
-            # half=True,
+            half=True,
             verbose=False,
             )
 
@@ -107,20 +117,21 @@ def main(video_name='测试.mp4'):
                             hide_all = False
 
                     if show_all: # 显示所有目标
+                        # label = f"{id} {results[0].names[c]} {conf:.2f}"
                         label = f"{names[c]}"
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     elif hide_all:
                             pass
                     elif id in show_id.keys():  # 显示指定id的目标
-                        # label = f"{id} {results[0].names[c]} {conf:.2f}"
-                        label = f"{names[c]}"
-                        # print('xyxy', det, xyxy)
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        label = "可疑目标事件对象"
+                        annotator.box_label(xyxy, label, color=colors(0, True))
 
         annotated_frame = annotator.result()
 
         cv2.imshow('image', annotated_frame)
-        video_writer.write(annotated_frame)
+        if not pause:
+            video_writer.write(annotated_frame)
+
         key = cv2.waitKey(1)
         if key == 27:
             break
@@ -132,6 +143,14 @@ def main(video_name='测试.mp4'):
             show_all = False
             hide_all = True
             show_id = {}
+        elif key == 32:  # 空格键暂停
+            # cv2.waitKey(0)
+            pause = not pause
+            if first_puase:
+                first_puase = False
+                show_all = True
+                hide_all = False
+                show_id = {}
 
     cap.release()
     video_writer.release()
